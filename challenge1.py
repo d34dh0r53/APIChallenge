@@ -11,13 +11,16 @@ from time import sleep
 
 class RaxServer(object):
     
-    def __init__(self, cs, server_name, image=None, flavor=None):
+    def __init__(self, cs, server_name, image, flavor):
         self.cs = cs
         self.server_name = server_name
         self.image = image
         self.flavor = flavor
         
-        self.instance = self.cs.servers.create(self.server_name, self.image.id, self.flavor.id)
+        self.instance = self.cs.servers.create(
+                            self.server_name, 
+                            self.image.id, 
+                            self.flavor.id)
         self.server_id = self.instance.id
         self.adminPass = self.instance.adminPass
     
@@ -32,7 +35,8 @@ class RaxServer(object):
         
 def auth():
     sys.stderr.write("Authenticating....")
-    pyrax.set_credential_file(os.path.expanduser("~/.rackspace_cloud_credentials"))
+    pyrax.set_credential_file(
+                os.path.expanduser("~/.rackspace_cloud_credentials"))
     cs = pyrax.cloudservers
     sys.stderr.write("success!\n")
     sys.stderr.flush()
@@ -57,10 +61,17 @@ def ProgressBar(servers, bar_length=50):
     status_string = ""
     for server in servers:
         progress_counter += server.progress()
-        status_string += "%s: %s (%d%%) " %(server.server_name, server.status(), server.progress())
+        status_string += "%s: %s (%d%%) " %(
+                server.server_name, 
+                server.status(), 
+                server.progress())
     bar_pct = float(progress_counter) / total_counter
     chunks = int(floor(bar_length * bar_pct))
-    return "\r[{0}>{1}] {2:.2}% {3}".format("="*chunks, " " * (bar_length - chunks), bar_pct * 100, status_string)
+    return "\r[{0}>{1}] {2:.2}% {3}".format(
+            "="*chunks, 
+            " " * (bar_length - chunks), 
+            bar_pct * 100, 
+            status_string)
     
 def BuildComplete(servers):
     flags = 0
