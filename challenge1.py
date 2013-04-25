@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""challenge1.py: Response to Challenge 1 of Rackspace API Challenge"""
+
+__author__ = "david.wilde@rackspace.com"
+
 import pyrax
 import sys
 import json
@@ -34,7 +38,7 @@ class RaxServer(object):
         return self.cs.servers.get(self.server_id).networks
         
 def auth():
-    sys.stderr.write("Authenticating....")
+    sys.stderr.write("Authenticating...")
     pyrax.set_credential_file(
                 os.path.expanduser("~/.rackspace_cloud_credentials"))
     cs = pyrax.cloudservers
@@ -55,25 +59,25 @@ def getFlavor(cs):
     sys.stderr.flush()
     return image,flavor
         
-def ProgressBar(servers, bar_length=50):
+def progressBar(servers, bar_length=50):
     total_counter = (len(servers)*100)
     progress_counter = 0
     status_string = ""
     for server in servers:
         progress_counter += server.progress()
-        status_string += "%s: %s (%d%%) " %(
+        status_string += "[%s: %s (%d%%)] " %(
                 server.server_name, 
                 server.status(), 
                 server.progress())
     bar_pct = float(progress_counter) / total_counter
     chunks = int(floor(bar_length * bar_pct))
-    return "\r[{0}>{1}] {2:.2}% {3}".format(
+    return "\r[{0}>{1}] {2:.2f}% {3}".format(
             "="*chunks, 
             " " * (bar_length - chunks), 
             bar_pct * 100, 
             status_string)
     
-def BuildComplete(servers):
+def buildComplete(servers):
     flags = 0
     for server in servers:
         if server.status() == 'ACTIVE':
@@ -98,7 +102,7 @@ def main():
         ooServers.append(s)
                 
     while True:
-        if BuildComplete(ooServers):
+        if buildComplete(ooServers):
             for ooServer in ooServers:
                 sys.stderr.write("\n")
                 sys.stdout.write(json.dumps({
@@ -110,7 +114,7 @@ def main():
                 sys.stdout.flush()
             break
         else:
-            sys.stderr.write(ProgressBar(ooServers))
+            sys.stderr.write(progressBar(ooServers))
             sys.stderr.flush()
             sleep(5)
     
