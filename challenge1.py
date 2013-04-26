@@ -37,6 +37,24 @@ class RaxServer(object):
     def networks(self):
         return self.cs.servers.get(self.server_id).networks
         
+    def _extAttr_(self, extAttr):
+        # Get an extended attribute from the list
+        # there has to be a better way to do this
+        self.server = self.cs.servers.get(self.server_id)
+        for attr, value in self.server.__dict__.iteritems():
+            if attr == extAttr:
+                return value
+        
+    def vm_state(self):
+        return str(self._extAttr_('OS-EXT-STS:vm_state'))
+    
+    def task_state(self):
+        return str(self._extAttr_('OS-EXT-STS:task_state'))
+                
+    def power_state(self):
+        return str(self._extAttr_('OS-EXT-STS:power_state'))
+        
+        
 def auth():
     sys.stderr.write("Authenticating...")
     pyrax.set_credential_file(
@@ -63,11 +81,11 @@ def progressBar(servers, bar_length=50):
     total_counter = (len(servers)*100)
     progress_counter = 0
     status_string = ""
-    for server in servers:
+    for server in servers:  
         progress_counter += server.progress()
         status_string += "[%s: %s (%d%%)] " %(
                 server.server_name, 
-                server.status(), 
+                server.task_state(), 
                 server.progress())
     bar_pct = float(progress_counter) / total_counter
     chunks = int(floor(bar_length * bar_pct))
@@ -92,17 +110,20 @@ def main():
     serverNames = ['oo-web1', 'oo-web2', 'oo-web3']
     
     cs = auth()
-    flavor, image = getFlavor(cs)
+    image, flavor = getFlavor(cs)
     
     # create the servers
     sys.stderr.write("Creating instances\n")
     sys.stderr.flush()
     for ooName in serverNames:
-        s = RaxServer(cs, ooName, flavor, image)
+        s = RaxServer(cs, ooName, image, flavor)
         ooServers.append(s)
                 
     while True:
         if buildComplete(ooServers):
+            # one more progress bar to show all 100's
+            sys.stderr.write(progressBar(ooServers))
+            sys.stderr.flush()
             for ooServer in ooServers:
                 sys.stderr.write("\n")
                 sys.stdout.write(json.dumps({
